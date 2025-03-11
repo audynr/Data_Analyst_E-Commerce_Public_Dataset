@@ -1,6 +1,6 @@
-**Penjelasan Singkat tentang E-Commerce Public Dataset by Olist**  
+**Penjelasan Singkat tentang E-Commerce Public Dataset**  
 
-E-Commerce Public Dataset by Olist adalah kumpulan data transaksi e-commerce di Brasil yang mencakup sekitar 100.000 pesanan dari tahun 2016 hingga 2018. Dataset ini memberikan informasi yang sangat kaya mengenai berbagai aspek pesanan, seperti status pesanan, harga, metode pembayaran, performa pengiriman, lokasi pelanggan, atribut produk, serta ulasan pelanggan. Data ini telah dianonimkan, dan referensi perusahaan atau mitra dalam teks ulasan telah diganti dengan nama-nama dari serial *Game of Thrones*.  
+E-Commerce Public Dataset adalah kumpulan data transaksi e-commerce di Brasil yang mencakup sekitar 100.000 pesanan dari tahun 2016 hingga 2018. Dataset ini memberikan informasi yang sangat kaya mengenai berbagai aspek pesanan, seperti status pesanan, harga, metode pembayaran, performa pengiriman, lokasi pelanggan, atribut produk, serta ulasan pelanggan. Data ini telah dianonimkan, dan referensi perusahaan atau mitra dalam teks ulasan telah diganti dengan nama-nama dari serial *Game of Thrones*.  
 
 Dataset ini memiliki struktur yang terdiri dari beberapa tabel yang saling berhubungan, termasuk data pesanan, detail produk, penjual, pelanggan, metode pembayaran, ulasan pelanggan, dan informasi geolokasi berdasarkan kode pos. Dengan adanya geolocation dataset, pengguna dapat menganalisis hubungan antara lokasi geografis dengan pola pembelian dan pengiriman barang. Selain itu, dataset ini dapat digabungkan dengan *Marketing Funnel Dataset* untuk memahami pesanan dari perspektif pemasaran.  
 

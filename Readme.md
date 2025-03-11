@@ -36,7 +36,7 @@ Untuk menjalankan dashboard, ikuti langkah-langkah berikut:
    ```
 2. Jalankan aplikasi Streamlit:
    ```bash
-   streamlit run main.py
+   streamlit run dashboard.py
    ```
 
 ## Proses Analisis
