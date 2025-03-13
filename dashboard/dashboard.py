@@ -48,7 +48,7 @@ st.title("Dashboard Analyst E-Commerce Public Dataset")
 
 @st.cache_data
 def load_data():
-    data = pd.read_csv("data_gabungan.csv")  # Pastikan file main_data.csv sudah tersedia
+    data = pd.read_csv("main_data.csv")  # Pastikan file main_data.csv sudah tersedia
     return data
 
 data = load_data()
@@ -106,7 +106,7 @@ if st.session_state["main_page"] == "About Data":
         # --- 1. Distribusi Customer (Peta Persebaran) ---
         st.subheader("Distribusi Customer")
         st.write("Peta berikut menunjukkan distribusi jumlah customer unik di tiap kota. Circle marker menunjukkan rata-rata koordinat kota dengan ukuran marker yang proporsional terhadap jumlah customer. Kota dengan jumlah customer terbanyak ditandai dengan ikon bintang.")
-        
+
         # Kelompokkan data pelanggan berdasarkan customer_city
         customer_group = data.groupby('customer_city').agg({
             'customer_id': pd.Series.nunique,   # Menghitung jumlah customer unik
@@ -114,164 +114,209 @@ if st.session_state["main_page"] == "About Data":
             'geolocation_lng': 'mean'
         }).reset_index().rename(columns={'customer_id': 'customer_count'})
 
-        # Tentukan kota dengan jumlah pelanggan terbanyak
-        top_customer = customer_group.sort_values('customer_count', ascending=False).iloc[0]
+        # Tambahkan filter untuk memilih rentang jumlah customer
+        min_customers = int(customer_group['customer_count'].min())
+        max_customers = int(customer_group['customer_count'].max())
+        selected_range = st.slider("Pilih Rentang Jumlah Customer:", min_value=min_customers, max_value=max_customers, value=(min_customers, max_customers))
 
-        # Buat peta dengan Folium
-        map_center = [data['geolocation_lat'].mean(), data['geolocation_lng'].mean()]
-        m = folium.Map(location=map_center, zoom_start=5)
+        # Filter data berdasarkan rentang yang dipilih
+        filtered_customer_group = customer_group[(customer_group['customer_count'] >= selected_range[0]) & (customer_group['customer_count'] <= selected_range[1])]
 
-        # Tambahkan marker untuk setiap kota pelanggan menggunakan CircleMarker
-        customer_fg = folium.FeatureGroup(name='Pelanggan')
-        for _, row in customer_group.iterrows():
-            folium.CircleMarker(
-                location=[row['geolocation_lat'], row['geolocation_lng']],
-                radius=row['customer_count'] / 100,  # Sesuaikan skala radius jika diperlukan
-                color='blue',
-                fill=True,
-                fill_color='blue',
-                fill_opacity=0.6,
-                popup=f"{row['customer_city']}: {row['customer_count']} pelanggan"
-            ).add_to(customer_fg)
+        # Tentukan kota dengan jumlah pelanggan terbanyak dari data yang sudah difilter
+        if not filtered_customer_group.empty:
+            top_customer = filtered_customer_group.sort_values('customer_count', ascending=False).iloc[0]
 
-        customer_fg.add_to(m)
-        folium.LayerControl().add_to(m)
+            # Buat peta dengan Folium
+            map_center = [data['geolocation_lat'].mean(), data['geolocation_lng'].mean()]
+            m = folium.Map(location=map_center, zoom_start=5)
 
-        # Tandai kota dengan jumlah pelanggan terbanyak dengan marker khusus
-        folium.Marker(
-            location=[top_customer['geolocation_lat'], top_customer['geolocation_lng']],
-            icon=folium.Icon(color='red', icon='star'),
-            popup=f"Top Pelanggan: {top_customer['customer_city']} ({top_customer['customer_count']})"
-        ).add_to(m)
+            # Tambahkan marker untuk setiap kota pelanggan menggunakan CircleMarker
+            customer_fg = folium.FeatureGroup(name='Pelanggan')
+            for _, row in filtered_customer_group.iterrows():
+                folium.CircleMarker(
+                    location=[row['geolocation_lat'], row['geolocation_lng']],
+                    radius=row['customer_count'] / 100,  # Sesuaikan skala radius jika diperlukan
+                    color='blue',
+                    fill=True,
+                    fill_color='blue',
+                    fill_opacity=0.6,
+                    popup=f"{row['customer_city']}: {row['customer_count']} pelanggan"
+                ).add_to(customer_fg)
 
-        components.html(m._repr_html_(), width=700, height=500)
+            customer_fg.add_to(m)
+            folium.LayerControl().add_to(m)
+
+            # Tandai kota dengan jumlah pelanggan terbanyak dengan marker khusus
+            folium.Marker(
+                location=[top_customer['geolocation_lat'], top_customer['geolocation_lng']],
+                icon=folium.Icon(color='red', icon='star'),
+                popup=f"Top Pelanggan: {top_customer['customer_city']} ({top_customer['customer_count']})"
+            ).add_to(m)
+
+            components.html(m._repr_html_(), width=700, height=500)
+        else:
+            st.write("Tidak ada data yang sesuai dengan rentang yang dipilih.")
         
         
         # --- 2. Frekuensi Pembelian per Customer (Histogram) ---
         st.subheader("Frekuensi Pembelian per Customer")
         st.write("Histogram berikut menggambarkan frekuensi pembelian per customer. Sumbu X menunjukkan jumlah pembelian, sedangkan sumbu Y menunjukkan jumlah customer yang memiliki frekuensi tersebut.")
-        
-        # Hitung jumlah pembelian per customer (misalnya dengan menghitung banyaknya order per customer_unique_id)
+
+        # Hitung jumlah pembelian per customer
         purchase_frequency = data.groupby("customer_unique_id").size()
+
+        # Tambahkan filter untuk memilih rentang jumlah pembelian
+        min_purchase = int(purchase_frequency.min())
+        max_purchase = int(purchase_frequency.max())
+        selected_range = st.slider("Pilih Rentang Jumlah Pembelian:", min_value=min_purchase, max_value=max_purchase, value=(min_purchase, max_purchase))
+
+        # Filter data berdasarkan rentang yang dipilih
+        filtered_data = purchase_frequency[(purchase_frequency >= selected_range[0]) & (purchase_frequency <= selected_range[1])]
+
+        # Plot histogram
         fig_hist, ax_hist = plt.subplots(figsize=(8,5))
-        # Menggunakan seaborn histplot dengan palette yang terintegrasi
-        import seaborn as sns
-        sns.histplot(purchase_frequency, bins=30, kde=False, color="steelblue", ax=ax_hist)
+        sns.histplot(filtered_data, bins=30, kde=False, color="steelblue", ax=ax_hist)
         ax_hist.set_xlabel("Jumlah Pembelian")
         ax_hist.set_ylabel("Frekuensi Customer")
         ax_hist.set_title("Distribusi Frekuensi Pembelian per Customer")
         st.pyplot(fig_hist)
+
         
         
         # --- 3. Distribusi Skor Review (Pie Chart) ---
-
         st.subheader("Distribusi Skor Review")
         st.write("Pie chart berikut menampilkan persentase masing-masing skor review yang diberikan oleh customer.")
 
-        # Hitung frekuensi setiap skor review, lalu urutkan berdasarkan skor
-        review_counts = data["review_score"].value_counts().sort_index()
+        # Tambahkan filter untuk memilih skor review yang ingin ditampilkan
+        all_scores = sorted(data["review_score"].unique())
+        selected_scores = st.multiselect("Pilih skor review:", options=all_scores, default=all_scores)
 
-        # Definisikan warna khusus untuk setiap skor (1 s.d. 5) 
-        # (sesuaikan hex code jika Anda ingin warna lain)
-        score_colors_map = {
-            1: "#2A2E5C",  # Contoh warna (dark purple)
-            2: "#1B728C",  # Contoh warna (teal)
-            3: "#1B8C5F",  # Contoh warna (green)
-            4: "#45BF55",  # Contoh warna (light green)
-            5: "#C1FA65"   # Contoh warna (lime-ish)
-        }
+        # Filter data berdasarkan skor yang dipilih
+        filtered_reviews = data[data["review_score"].isin(selected_scores)]
 
-        # Buat list warna sesuai urutan skor
-        review_colors = [score_colors_map[score] for score in review_counts.index]
+        if not filtered_reviews.empty:
+            # Hitung frekuensi setiap skor review, lalu urutkan berdasarkan skor
+            review_counts = filtered_reviews["review_score"].value_counts().sort_index()
 
-        # Plot pie chart
-        fig_pie1, ax_pie1 = plt.subplots(figsize=(8, 6))
-        wedges1, texts1, autotexts1 = ax_pie1.pie(
-            review_counts,
-            labels=review_counts.index,
-            autopct='%1.1f%%',
-            colors=review_colors,
-            startangle=140,
-            shadow=True,
-            wedgeprops={'edgecolor': 'black'}
-        )
+            # Definisikan warna khusus untuk setiap skor (1 s.d. 5)
+            score_colors_map = {
+                1: "#2A2E5C",  # dark purple
+                2: "#1B728C",  # teal
+                3: "#1B8C5F",  # green
+                4: "#45BF55",  # light green
+                5: "#C1FA65"   # lime-ish
+            }
+            # Buat list warna sesuai urutan skor
+            review_colors = [score_colors_map[score] for score in review_counts.index]
 
-        # Ubah format teks persentase dengan background hitam
-        for autotext in autotexts1:
-            autotext.set_color('white')
-            autotext.set_bbox(dict(facecolor='black', edgecolor='black', boxstyle='round,pad=0.3'))
+            # Plot pie chart
+            fig_pie1, ax_pie1 = plt.subplots(figsize=(8, 6))
+            wedges1, texts1, autotexts1 = ax_pie1.pie(
+                review_counts,
+                labels=review_counts.index,
+                autopct='%1.1f%%',
+                colors=review_colors,
+                startangle=140,
+                shadow=True,
+                wedgeprops={'edgecolor': 'black'}
+            )
 
-        ax_pie1.set_title("Distribusi Skor Review", fontsize=14, fontweight='bold')
+            # Ubah format teks persentase dengan background hitam
+            for autotext in autotexts1:
+                autotext.set_color('white')
+                autotext.set_bbox(dict(facecolor='black', edgecolor='black', boxstyle='round,pad=0.3'))
 
-        # Tambahkan legenda kustom agar warnanya sesuai dengan skor
-        patches = [mpatches.Patch(color=score_colors_map[s], label=f"Score {s}") for s in review_counts.index]
-        ax_pie1.legend(handles=patches, loc="upper right", bbox_to_anchor=(1.2, 1))
+            ax_pie1.set_title("Distribusi Skor Review", fontsize=14, fontweight='bold')
 
-        st.pyplot(fig_pie1)
+            # Tambahkan legenda kustom agar warnanya sesuai dengan skor
+            patches = [mpatches.Patch(color=score_colors_map[s], label=f"Score {s}") for s in review_counts.index]
+            ax_pie1.legend(handles=patches, loc="upper right", bbox_to_anchor=(1.2, 1))
 
+            st.pyplot(fig_pie1)
+        else:
+            st.write("Tidak ada data untuk skor review yang dipilih.")
 
         # --- 4. Metode Pembayaran Terpopuler (Pie Chart) ---
         st.subheader("Metode Pembayaran Terpopuler")
         st.write("Pie chart berikut menunjukkan metode pembayaran yang paling sering digunakan dalam transaksi, berdasarkan persentase jumlah transaksi.")
 
-        # Hitung frekuensi metode pembayaran
-        payment_counts = data["payment_type"].value_counts()
+        # Tambahkan filter untuk memilih metode pembayaran yang ingin ditampilkan
+        all_payment_types = data["payment_type"].unique().tolist()
+        selected_payment_types = st.multiselect("Pilih metode pembayaran:", options=all_payment_types, default=all_payment_types)
 
-        # Gunakan palet warna bergradasi (misalnya "viridis")
-        colors_payment = sns.color_palette("viridis", len(payment_counts))
+        # Filter data berdasarkan metode pembayaran yang dipilih
+        filtered_payment_data = data[data["payment_type"].isin(selected_payment_types)]
 
-        # Atur efek explode untuk menonjolkan metode pembayaran paling populer (frekuensi tertinggi)
-        explode = [0.1 if i == 0 else 0 for i in range(len(payment_counts))]
+        if not filtered_payment_data.empty:
+            # Hitung frekuensi metode pembayaran
+            payment_counts = filtered_payment_data["payment_type"].value_counts()
 
-        fig_pie2, ax_pie2 = plt.subplots(figsize=(8, 6))
-        wedges2, texts2, autotexts2 = ax_pie2.pie(
-            payment_counts,
-            labels=payment_counts.index,
-            autopct='%1.1f%%',
-            colors=colors_payment,
-            startangle=140,
-            explode=explode,
-            shadow=True,
-            wedgeprops={'edgecolor': 'black'}
-        )
-
-        # Ubah format teks persentase agar memiliki background hitam
-        for autotext in autotexts2:
-            autotext.set_color('white')
-            autotext.set_bbox(dict(facecolor='black', edgecolor='black', boxstyle='round,pad=0.3'))
-
-        ax_pie2.set_title("Proporsi Jenis Pembayaran yang Digunakan oleh Pelanggan", fontsize=14, fontweight='bold')
-
-        # Tambahkan legenda di samping
-        ax_pie2.legend(payment_counts.index, loc="upper right", bbox_to_anchor=(1.2, 1))
-
-        st.pyplot(fig_pie2)
-
+            # Gunakan palet warna bergradasi (misalnya "viridis")
+            colors_payment = sns.color_palette("viridis", len(payment_counts))
+            
+            # Atur efek explode untuk menonjolkan metode pembayaran paling populer (frekuensi tertinggi)
+            explode = [0.1 if i == 0 else 0 for i in range(len(payment_counts))]
+            
+            fig_pie2, ax_pie2 = plt.subplots(figsize=(8, 6))
+            wedges2, texts2, autotexts2 = ax_pie2.pie(
+                payment_counts,
+                labels=payment_counts.index,
+                autopct='%1.1f%%',
+                colors=colors_payment,
+                startangle=140,
+                explode=explode,
+                shadow=True,
+                wedgeprops={'edgecolor': 'black'}
+            )
+            
+            # Ubah format teks persentase agar memiliki background hitam
+            for autotext in autotexts2:
+                autotext.set_color('white')
+                autotext.set_bbox(dict(facecolor='black', edgecolor='black', boxstyle='round,pad=0.3'))
+            
+            ax_pie2.set_title("Proporsi Jenis Pembayaran yang Digunakan oleh Pelanggan", fontsize=14, fontweight='bold')
+            
+            # Tambahkan legenda di samping
+            ax_pie2.legend(payment_counts.index, loc="upper right", bbox_to_anchor=(1.2, 1))
+            
+            st.pyplot(fig_pie2)
+        else:
+            st.write("Tidak ada data untuk metode pembayaran yang dipilih.")
 
 
 
 
     elif viz_option == "Seller Peformances":
+
         # --- Konversi Tipe Data untuk Kolom Tanggal ---
         data['order_purchase_timestamp'] = pd.to_datetime(data['order_purchase_timestamp'])
         data['order_delivered_customer_date'] = pd.to_datetime(data['order_delivered_customer_date'], errors='coerce')
         data['order_estimated_delivery_date'] = pd.to_datetime(data['order_estimated_delivery_date'], errors='coerce')
 
         # --- Hitung Waktu Pengiriman ---
-        # Waktu pengiriman aktual (dalam hari) dihitung dari selisih antara tanggal pengiriman ke pelanggan dan tanggal pembelian
+        # Waktu pengiriman aktual (dalam hari)
         data['delivery_time_actual'] = (data['order_delivered_customer_date'] - data['order_purchase_timestamp']).dt.days
-        # Waktu pengiriman estimasi (dalam hari) dihitung dari selisih antara tanggal estimasi pengiriman dan tanggal pembelian
+        # Waktu pengiriman estimasi (dalam hari)
         data['delivery_time_estimated'] = (data['order_estimated_delivery_date'] - data['order_purchase_timestamp']).dt.days
 
         st.header("Seller Performance Analysis")
         st.write("- **Top 10 Seller dengan Penjualan Tertinggi:** Menampilkan grafik batang dari 10 penjual dengan jumlah transaksi terbanyak.")
-        
 
-        # 1. Top 10 Seller dengan Penjualan Tertinggi → Bar chart
+        # --------------------------------------------------------
+        # 1. Top 10 Seller dengan Penjualan Tertinggi (Bar Chart)
+        # --------------------------------------------------------
         st.subheader("Top 10 Seller dengan Penjualan Tertinggi")
-        st.write("- **Distribusi Rata-rata Waktu Pengiriman per Seller:** Menunjukkan distribusi rata-rata waktu pengiriman dalam bentuk boxplot.")
-        top_sellers = data.groupby("seller_id").size().reset_index(name="penjualan")
-        top_sellers = top_sellers.sort_values("penjualan", ascending=False).head(10)
+        # Hitung jumlah penjualan per seller
+        seller_sales = data.groupby("seller_id").size().reset_index(name="penjualan")
+        # Filter: pilih rentang jumlah penjualan
+        min_penjualan = int(seller_sales["penjualan"].min())
+        max_penjualan = int(seller_sales["penjualan"].max())
+        penjualan_range = st.slider("Pilih rentang jumlah penjualan:", min_value=min_penjualan, max_value=max_penjualan, value=(min_penjualan, max_penjualan))
+        # Filter seller berdasarkan rentang yang dipilih
+        filtered_seller_sales = seller_sales[(seller_sales["penjualan"] >= penjualan_range[0]) & (seller_sales["penjualan"] <= penjualan_range[1])]
+        # Pilih 10 seller teratas dari data yang sudah difilter
+        top_sellers = filtered_seller_sales.sort_values("penjualan", ascending=False).head(10)
+        # Plot bar chart
         fig1, ax1 = plt.subplots(figsize=(10, 6))
         sns.barplot(data=top_sellers, x="penjualan", y="seller_id", palette="viridis", ax=ax1)
         ax1.set_xlabel("Jumlah Penjualan")
@@ -279,127 +324,175 @@ if st.session_state["main_page"] == "About Data":
         ax1.set_title("Top 10 Seller dengan Penjualan Tertinggi")
         st.pyplot(fig1)
 
-        # 2. Distribusi Rata-rata Waktu Pengiriman per Seller → Boxplot
+        # --------------------------------------------------------
+        # 2. Distribusi Rata-rata Waktu Pengiriman per Seller (Boxplot)
+        # --------------------------------------------------------
         st.subheader("Distribusi Rata-rata Waktu Pengiriman per Seller")
         # Hitung rata-rata waktu pengiriman aktual per seller
         avg_delivery_per_seller = data.groupby("seller_id")["delivery_time_actual"].mean().reset_index()
+        # Filter: pilih rentang waktu pengiriman
+        min_delivery = int(avg_delivery_per_seller["delivery_time_actual"].min())
+        max_delivery = int(avg_delivery_per_seller["delivery_time_actual"].max())
+        delivery_range = st.slider("Pilih rentang rata-rata waktu pengiriman (hari):", min_value=min_delivery, max_value=max_delivery, value=(min_delivery, max_delivery))
+        filtered_delivery = avg_delivery_per_seller[(avg_delivery_per_seller["delivery_time_actual"] >= delivery_range[0]) &
+                                                    (avg_delivery_per_seller["delivery_time_actual"] <= delivery_range[1])]
+        # Plot boxplot
         fig2, ax2 = plt.subplots(figsize=(12, 6))
-        sns.boxplot(x=avg_delivery_per_seller["delivery_time_actual"], color="lightblue", ax=ax2)
+        sns.boxplot(x=filtered_delivery["delivery_time_actual"], color="lightblue", ax=ax2)
         ax2.set_xlabel("Rata-rata Waktu Pengiriman (hari)")
         ax2.set_title("Distribusi Rata-rata Waktu Pengiriman per Seller")
         st.pyplot(fig2)
 
+        # --------------------------------------------------------
+        # 3. Distribusi Seller per Provinsi (Peta Interaktif)
+        # --------------------------------------------------------
         st.subheader("Distribusi Seller per Provinsi")
         st.write("- **Distribusi Seller per Provinsi:** Memvisualisasikan jumlah penjual di berbagai kota menggunakan peta interaktif.")
-        # --- Kelompokkan data penjual berdasarkan seller_city ---
+        # Kelompokkan data penjual berdasarkan seller_city
         seller_group = data.groupby('seller_city').agg({
             'seller_id': pd.Series.nunique,   # Menghitung jumlah seller unik
             'geolocation_lat': 'mean',
             'geolocation_lng': 'mean'
         }).reset_index().rename(columns={'seller_id': 'seller_count'})
+        # Filter: pilih rentang jumlah penjual per kota
+        min_seller_count = int(seller_group["seller_count"].min())
+        max_seller_count = int(seller_group["seller_count"].max())
+        seller_range = st.slider("Pilih rentang jumlah penjual per kota:", min_value=min_seller_count, max_value=max_seller_count, value=(min_seller_count, max_seller_count))
+        filtered_seller_group = seller_group[(seller_group["seller_count"] >= seller_range[0]) & (seller_group["seller_count"] <= seller_range[1])]
+        if not filtered_seller_group.empty:
+            # Tentukan kota dengan jumlah seller terbanyak dari data yang sudah difilter
+            top_seller = filtered_seller_group.sort_values('seller_count', ascending=False).iloc[0]
+            # Buat peta
+            map_center = [data['geolocation_lat'].mean(), data['geolocation_lng'].mean()]
+            m = folium.Map(location=map_center, zoom_start=5)
+            seller_fg = folium.FeatureGroup(name='Penjual')
+            for _, row in filtered_seller_group.iterrows():
+                folium.CircleMarker(
+                    location=[row['geolocation_lat'], row['geolocation_lng']],
+                    radius=row['seller_count'] / 100,  # Sesuaikan skala radius
+                    color='red',
+                    fill=True,
+                    fill_color='red',
+                    fill_opacity=0.6,
+                    popup=f"{row['seller_city']}: {row['seller_count']} penjual"
+                ).add_to(seller_fg)
+            seller_fg.add_to(m)
+            folium.LayerControl().add_to(m)
+            # Tandai kota dengan jumlah seller terbanyak secara khusus
+            folium.Marker(
+                location=[top_seller['geolocation_lat'], top_seller['geolocation_lng']],
+                icon=folium.Icon(color='blue', icon='star'),
+                popup=f"Top Penjual: {top_seller['seller_city']} ({top_seller['seller_count']})"
+            ).add_to(m)
+            components.html(m._repr_html_(), width=700, height=500)
+        else:
+            st.write("Tidak ada data penjual sesuai dengan filter yang dipilih.")
 
-        # Tentukan kota dengan jumlah penjual terbanyak
-        top_seller = seller_group.sort_values('seller_count', ascending=False).iloc[0]
-
-        # --- Buat peta dengan Folium ---
-        # Tentukan titik tengah peta berdasarkan rata-rata seluruh koordinat
-        map_center = [data['geolocation_lat'].mean(), data['geolocation_lng'].mean()]
-        m = folium.Map(location=map_center, zoom_start=5)
-
-        # Tambahkan marker untuk setiap kota penjual menggunakan CircleMarker
-        seller_fg = folium.FeatureGroup(name='Penjual')
-        for _, row in seller_group.iterrows():
-            folium.CircleMarker(
-                location=[row['geolocation_lat'], row['geolocation_lng']],
-                radius=row['seller_count'] / 100,  # Sesuaikan skala radius sesuai kebutuhan
-                color='red',
-                fill=True,
-                fill_color='red',
-                fill_opacity=0.6,
-                popup=f"{row['seller_city']}: {row['seller_count']} penjual"
-            ).add_to(seller_fg)
-
-        seller_fg.add_to(m)
-        folium.LayerControl().add_to(m)
-
-        # Tandai kota dengan penjual terbanyak secara khusus dengan marker bertanda bintang
-        folium.Marker(
-            location=[top_seller['geolocation_lat'], top_seller['geolocation_lng']],
-            icon=folium.Icon(color='blue', icon='star'),
-            popup=f"Top Penjual: {top_seller['seller_city']} ({top_seller['seller_count']})"
-        ).add_to(m)
-
-        # Tampilkan peta di Streamlit
-        components.html(m._repr_html_(), width=700, height=500)
-
-        # 4. Rata-rata Waktu Pengiriman (Actual vs Estimated) → Bar chart
-        st.write("Bagian ini menganalisis performa penjual dengan beberapa visualisasi, seperti:")
-
-
+        # --------------------------------------------------------
+        # 4. Rata-rata Waktu Pengiriman (Actual vs Estimated) (Bar Chart)
+        # --------------------------------------------------------
         st.subheader("Rata-rata Waktu Pengiriman (Actual vs Estimated)")
         st.write("- **Rata-rata Waktu Pengiriman (Actual vs Estimated):** Membandingkan rata-rata waktu pengiriman aktual dengan estimasi pengiriman.")
-        
-        avg_actual = data["delivery_time_actual"].mean()
-        avg_estimated = data["delivery_time_estimated"].mean()
-        avg_delivery_df = pd.DataFrame({
-            "Tipe": ["Actual", "Estimated"],
-            "Waktu Pengiriman": [avg_actual, avg_estimated]
-        })
-        fig4, ax4 = plt.subplots(figsize=(6, 4))
-        sns.barplot(x="Tipe", y="Waktu Pengiriman", data=avg_delivery_df, palette="pastel", ax=ax4)
-        ax4.set_title("Rata-rata Waktu Pengiriman (Actual vs Estimated)")
-        st.pyplot(fig4)
+        # Tambahkan filter tanggal berdasarkan order_purchase_timestamp
+        min_date = data['order_purchase_timestamp'].min().date()
+        max_date = data['order_purchase_timestamp'].max().date()
+        selected_dates = st.date_input("Pilih rentang tanggal pembelian:", value=(min_date, max_date))
+        if isinstance(selected_dates, tuple) and len(selected_dates) == 2:
+            start_date, end_date = selected_dates
+        else:
+            start_date, end_date = min_date, max_date
+        filtered_date_data = data[(data['order_purchase_timestamp'].dt.date >= start_date) & (data['order_purchase_timestamp'].dt.date <= end_date)]
+        if not filtered_date_data.empty:
+            avg_actual = filtered_date_data["delivery_time_actual"].mean()
+            avg_estimated = filtered_date_data["delivery_time_estimated"].mean()
+            avg_delivery_df = pd.DataFrame({
+                "Tipe": ["Actual", "Estimated"],
+                "Waktu Pengiriman": [avg_actual, avg_estimated]
+            })
+            fig4, ax4 = plt.subplots(figsize=(6, 4))
+            sns.barplot(x="Tipe", y="Waktu Pengiriman", data=avg_delivery_df, palette="pastel", ax=ax4)
+            ax4.set_title("Rata-rata Waktu Pengiriman (Actual vs Estimated)")
+            st.pyplot(fig4)
+        else:
+            st.write("Tidak ada data untuk rentang tanggal yang dipilih.")
 
-        # 5. Distribusi Harga Produk → Histogram
+        # --------------------------------------------------------
+        # 5. Distribusi Harga Produk (Histogram)
+        # --------------------------------------------------------
         st.subheader("Distribusi Harga Produk")
         st.write("- **Distribusi Harga Produk:** Menampilkan histogram distribusi harga produk yang terjual.")
+        # Filter: pilih rentang harga produk
+        min_price = float(data["price"].min())
+        max_price = float(data["price"].max())
+        price_range = st.slider("Pilih rentang harga produk:", min_value=min_price, max_value=max_price, value=(min_price, max_price))
+        filtered_price_data = data[(data["price"] >= price_range[0]) & (data["price"] <= price_range[1])]
         fig5, ax5 = plt.subplots(figsize=(10, 6))
-        sns.histplot(data["price"], kde=True, ax=ax5, color="coral")
+        sns.histplot(filtered_price_data["price"], kde=True, ax=ax5, color="coral")
         ax5.set_xlabel("Harga Produk")
         ax5.set_title("Distribusi Harga Produk")
         st.pyplot(fig5)
 
     elif viz_option == "Filter Map":
         st.header("Map Filter By Geolocation City")
-        st.write("Fitur ini memungkinkan pengguna untuk memilih kota berdasarkan geolokasi, kemudian:")
-        selected_city = st.selectbox("Pilih Kota (Geolocation):", sorted(data['geolocation_city'].dropna().unique()))
-        filtered_city_data = data[data['geolocation_city'] == selected_city]
-        
+        st.write("Fitur ini memungkinkan pengguna untuk melihat kota-kota yang memenuhi kriteria minimum jumlah penjual dan pembeli, beserta penandaan area untuk masing-masing kota.")
 
-        if not filtered_city_data.empty:
-            # Menghitung jumlah penjual dan pembeli di kota yang dipilih
-            st.write("- Menampilkan jumlah penjual dan pembeli di kota tersebut.")
-            seller_count = filtered_city_data['seller_id'].nunique() if 'seller_id' in filtered_city_data.columns else 0
-            customer_count = filtered_city_data['customer_unique_id'].nunique() if 'customer_unique_id' in filtered_city_data.columns else 0
-            st.write("- Menampilkan peta dengan marker yang menunjukkan lokasi kota terpilih.")
-            st.write(f"Pada kota **{selected_city}** terdapat **{seller_count}** penjual dan **{customer_count}** pembeli.")
-            
-            # Top 5 kategori produk di kota tersebut
-            top5_products = filtered_city_data['product_category_name'].value_counts().head(5)
-            st.write("- Menampilkan 5 kategori produk terlaris di kota yang dipilih.")
-            st.write("Top 5 kategori produk di kota ini:")
-            
-            st.dataframe(top5_products.reset_index().rename(columns={'index': 'product_category_name', 'product_category_name': 'Jumlah'}))
-            
-            # Menentukan titik tengah untuk peta dari data kota tersebut
-            avg_lat = filtered_city_data['geolocation_lat'].mean()
-            avg_lng = filtered_city_data['geolocation_lng'].mean()
-            m = folium.Map(location=[avg_lat, avg_lng], zoom_start=10)
-            
-            # Menambahkan marker untuk kota terpilih
-            folium.Marker(
-                location=[avg_lat, avg_lng],
-                popup=f"{selected_city}: {seller_count} penjual, {customer_count} pembeli",
-                icon=folium.Icon(color='green', icon='info-sign')
-            ).add_to(m)
-            
+        # Filter: Masukkan threshold minimum penjual dan pembeli
+        min_sellers = st.number_input("Minimum jumlah penjual:", min_value=0, value=0)
+        min_customers = st.number_input("Minimum jumlah pembeli:", min_value=0, value=0)
+
+        # Kelompokkan data berdasarkan kota (geolocation_city)
+        city_group = data.groupby('geolocation_city').agg({
+            'seller_id': pd.Series.nunique,
+            'customer_unique_id': pd.Series.nunique,
+            'geolocation_lat': 'mean',
+            'geolocation_lng': 'mean'
+        }).reset_index().rename(columns={
+            'seller_id': 'seller_count',
+            'customer_unique_id': 'customer_count'
+        })
+
+        # Filter kota yang memenuhi threshold
+        filtered_city_group = city_group[
+            (city_group['seller_count'] >= min_sellers) &
+            (city_group['customer_count'] >= min_customers)
+        ]
+
+        if not filtered_city_group.empty:
+            st.write(f"Terdapat {filtered_city_group.shape[0]} kota yang memenuhi kriteria.")
+            st.dataframe(filtered_city_group)
+
+            # Filter tambahan: Tentukan tingkat zoom peta
+            map_zoom = st.slider("Tentukan tingkat zoom peta:", min_value=5, max_value=15, value=10)
+
+            # Titik tengah peta dihitung dari rata-rata koordinat kota-kota yang memenuhi kriteria
+            avg_lat = filtered_city_group['geolocation_lat'].mean()
+            avg_lng = filtered_city_group['geolocation_lng'].mean()
+            m = folium.Map(location=[avg_lat, avg_lng], zoom_start=map_zoom)
+
+            # Tambahkan marker dan circle untuk setiap kota yang memenuhi kriteria
+            for _, row in filtered_city_group.iterrows():
+                # Tambahkan circle untuk menandai area kota
+                folium.Circle(
+                    location=[row['geolocation_lat'], row['geolocation_lng']],
+                    radius=5000,  # radius dalam meter, sesuaikan jika diperlukan
+                    color='blue',
+                    fill=True,
+                    fill_opacity=0.1,
+                    popup=f"Area {row['geolocation_city']}"
+                ).add_to(m)
+
+                # Tambahkan marker untuk menampilkan info jumlah penjual dan pembeli
+                folium.Marker(
+                    location=[row['geolocation_lat'], row['geolocation_lng']],
+                    popup=f"{row['geolocation_city']}: {row['seller_count']} penjual, {row['customer_count']} pembeli",
+                    icon=folium.Icon(color='green', icon='info-sign')
+                ).add_to(m)
+
             # Tampilkan peta menggunakan streamlit components
             components.html(m._repr_html_(), width=700, height=500)
         else:
-            st.write("Data tidak ditemukan untuk kota yang dipilih.")
+            st.write("Tidak ada kota yang memenuhi kriteria minimum penjual dan pembeli.")
 
-    else:
-        st.write("Silakan pilih salah satu sub-bab di sidebar (Filter Produk, Analisis Penjualan, atau Map Filter).")
 
 
 # --- Halaman Data ---
