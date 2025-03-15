@@ -6,7 +6,7 @@ E-Commerce Public Dataset adalah kumpulan data transaksi e-commerce di Brasil ya
 ## Struktur Proyek
 - **dashboard/**  
   - `main.py` — File utama aplikasi Streamlit untuk dashboard.  
-  - `data_gabungan.csv` — File CSV hasil penggabungan data dari berbagai dataset.
+  - `main_data.csv` — File CSV hasil penggabungan data dari berbagai dataset.
 - **notebooks/**  
   - Notebook Jupyter yang mendokumentasikan proses pembersihan, penggabungan, dan analisis data secara detail.
 - **requirements.txt**  
@@ -26,10 +26,15 @@ E-Commerce Public Dataset adalah kumpulan data transaksi e-commerce di Brasil ya
    ```
 
 3. **Export Data Gabungan:**
-   Sebelum memasuki tahap visualisasi, data gabungan diekspor ke dalam file CSV (`data_gabungan.csv`) dan disimpan di folder **dashboard**. Hal ini dilakukan agar data lebih mudah diakses dan digunakan dalam pembuatan dashboard menggunakan Streamlit Cloud.
+   Sebelum memasuki tahap visualisasi, data gabungan diekspor ke dalam file CSV (`main_data.csv`) dan disimpan di folder **dashboard**. Hal ini dilakukan agar data lebih mudah diakses dan digunakan dalam pembuatan dashboard menggunakan Streamlit Cloud.
 
 ## Menjalankan Dashboard
-Untuk menjalankan dashboard, ikuti langkah-langkah berikut:
+Sebelum mengakses Streamlit, pastikan data telah diekstrak atau di-unzip dengan benar. Jika data tidak tersedia, silakan unduh dari tautan berikut:
+[Download Data](https://drive.google.com/file/d/1hXpa3YTI1V1kHsHkA0NTUTmbpDevcTto/view?usp=drive_link)
+
+Setelah mengunduh, pindahkan hasil unduhan ke dalam folder **dashboard**, lalu ekstrak file tersebut.
+
+### Langkah-langkah menjalankan dashboard:
 1. Masuk ke folder **dashboard**:
    ```bash
    cd dashboard
@@ -49,4 +54,4 @@ Dashboard ini memberikan insight mendalam dari E-Commerce Public Dataset by Olis
 - **Tren Produk dan Pembayaran:** Mengeksplorasi kategori produk yang diminati serta jenis pembayaran yang paling digemari oleh pelanggan.
 
 Selamat mencoba dan semoga dashboard ini dapat membantu dalam memahami dinamika e-commerce di Brasil!
-```
+

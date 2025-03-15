@@ -5,6 +5,7 @@ import seaborn as sns
 import folium
 import streamlit.components.v1 as components
 import matplotlib.patches as mpatches
+import plotly.express as px
 
 # Suntikkan CSS kustom untuk tombol agar tampak seperti teks biasa
 st.markdown(
@@ -75,7 +76,8 @@ viz_options = [
     "-- Choose Data Visualization --",
     "Customer Behaviour", 
     "Seller Peformances", 
-    "Filter Map"
+    "Geolocation Map",
+    "RFM Analysis"
 ]
 viz_option = st.sidebar.selectbox("Analysis Results", viz_options, index=0)
 
@@ -282,6 +284,7 @@ if st.session_state["main_page"] == "About Data":
             st.pyplot(fig_pie2)
         else:
             st.write("Tidak ada data untuk metode pembayaran yang dipilih.")
+    
 
 
 
@@ -432,7 +435,7 @@ if st.session_state["main_page"] == "About Data":
         ax5.set_title("Distribusi Harga Produk")
         st.pyplot(fig5)
 
-    elif viz_option == "Filter Map":
+    elif viz_option == "Geolocation Map":
         st.header("Map Filter By Geolocation City")
         st.write("Fitur ini memungkinkan pengguna untuk melihat kota-kota yang memenuhi kriteria minimum jumlah penjual dan pembeli, beserta penandaan area untuk masing-masing kota.")
 
@@ -492,6 +495,93 @@ if st.session_state["main_page"] == "About Data":
             components.html(m._repr_html_(), width=700, height=500)
         else:
             st.write("Tidak ada kota yang memenuhi kriteria minimum penjual dan pembeli.")
+    
+    elif viz_option == "RFM Analysis":
+        st.header("Understanding Customer Loyalty")
+
+        data["order_purchase_timestamp"] = pd.to_datetime(data["order_purchase_timestamp"])
+
+        col1, col2 = st.columns(2)
+        with col1:
+            start_date = st.date_input("Pilih Tanggal Mulai:", data["order_purchase_timestamp"].min())
+        with col2:
+            end_date = st.date_input("Pilih Tanggal Akhir:", data["order_purchase_timestamp"].max())
+
+        start_date = pd.to_datetime(start_date)
+        end_date = pd.to_datetime(end_date)
+
+        data = data[(data["order_purchase_timestamp"] >= start_date) & 
+                    (data["order_purchase_timestamp"] <= end_date)]
+
+
+        # Hitung RFM
+        snapshot_date = data['order_purchase_timestamp'].max() + pd.Timedelta(days=1)
+        rfm = data.groupby('customer_unique_id').agg({
+            'order_purchase_timestamp': lambda x: (snapshot_date - x.max()).days,
+            'order_id': 'count',
+            'payment_value': 'sum'
+        }).reset_index()
+        rfm.columns = ['customer_unique_id', 'Recency', 'Frequency', 'Monetary']
+
+        # Grouping Manual
+        def manual_grouping(freq):
+            if freq <= 2:
+                return "Low"
+            elif freq <= 5:
+                return "Medium"
+            else:
+                return "High"
+
+        rfm['Transaction_Group'] = rfm['Frequency'].apply(manual_grouping)
+
+        # Binning Monetary
+        bins = [0, 100, 500, 1000, 5000, rfm['Monetary'].max()]
+        labels = ['<100', '100-500', '500-1000', '1000-5000', '>5000']
+        rfm['Monetary_bin'] = pd.cut(rfm['Monetary'], bins=bins, labels=labels, include_lowest=True)
+
+        # Pilihan Filter di dalam Halaman
+        st.subheader("Filter Tambahan")
+        col3, col4 = st.columns(2)
+
+        with col3:
+            group_option = st.selectbox("Pilih Kelompok Transaksi:", ["All", "Low", "Medium", "High"])
+        with col4:
+            monetary_option = st.selectbox("Pilih Kategori Total Pengeluaran:", ["All"] + list(rfm['Monetary_bin'].unique()))
+
+        # Terapkan Filter
+        if group_option != "All":
+            rfm = rfm[rfm["Transaction_Group"] == group_option]
+        if monetary_option != "All":
+            rfm = rfm[rfm["Monetary_bin"] == monetary_option]
+
+        # Visualisasi Data
+        st.subheader("Visualisasi Data")
+
+        # Distribusi Recency
+        fig_recency = px.histogram(rfm, x="Recency", nbins=30, title="Distribusi Recency", color_discrete_sequence=["skyblue"])
+        st.plotly_chart(fig_recency)
+
+        # Distribusi Frequency
+        fig_frequency = px.histogram(rfm, x="Frequency", nbins=30, title="Distribusi Frequency", color_discrete_sequence=["salmon"])
+        st.plotly_chart(fig_frequency)
+
+        # Distribusi Monetary
+        fig_monetary = px.histogram(rfm, x="Monetary", nbins=30, title="Distribusi Monetary", color_discrete_sequence=["lightgreen"])
+        st.plotly_chart(fig_monetary)
+
+        # Scatter Plot Frequency vs Monetary
+        fig_scatter = px.scatter(rfm, x="Frequency", y="Monetary", title="Hubungan antara Frequency dan Monetary", opacity=0.5)
+        st.plotly_chart(fig_scatter)
+
+        # Boxplot Transaksi Grouping
+        fig_boxplot = px.box(rfm, x="Transaction_Group", y="Monetary", title="Perbandingan Total Pengeluaran berdasarkan Kelompok Transaksi", color="Transaction_Group")
+        st.plotly_chart(fig_boxplot)
+
+        # Distribusi Bin Monetary
+        fig_bar = px.bar(rfm['Monetary_bin'].value_counts().sort_index(), 
+                        title="Distribusi Pelanggan Berdasarkan Total Pengeluaran (Binning)",
+                        labels={'index': 'Kategori Total Pengeluaran', 'value': 'Jumlah Pelanggan'})
+        st.plotly_chart(fig_bar)
 
 
 
