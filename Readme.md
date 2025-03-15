@@ -5,8 +5,7 @@ E-Commerce Public Dataset adalah kumpulan data transaksi e-commerce di Brasil ya
 
 ## Struktur Proyek
 - **dashboard/**  
-  - `main.py` — File utama aplikasi Streamlit untuk dashboard.  
-  - `main_data.csv` — File CSV hasil penggabungan data dari berbagai dataset.
+  - `dashboard.py` — File utama aplikasi Streamlit untuk dashboard.  
 - **notebooks/**  
   - Notebook Jupyter yang mendokumentasikan proses pembersihan, penggabungan, dan analisis data secara detail.
 - **requirements.txt**  
@@ -25,16 +24,18 @@ E-Commerce Public Dataset adalah kumpulan data transaksi e-commerce di Brasil ya
    pip install -r requirements.txt
    ```
 
-3. **Export Data Gabungan:**
-   Sebelum memasuki tahap visualisasi, data gabungan diekspor ke dalam file CSV (`main_data.csv`) dan disimpan di folder **dashboard**. Hal ini dilakukan agar data lebih mudah diakses dan digunakan dalam pembuatan dashboard menggunakan Streamlit Cloud.
+3. **Unduh dan Ekstrak Data:**
+   Karena ukuran dataset terlalu besar untuk disertakan dalam repositori, file `main_data.csv` perlu diunduh secara manual.
+   
+   - **Unduh data dari tautan berikut:**  
+     [Download Data](https://drive.google.com/file/d/1hXpa3YTI1V1kHsHkA0NTUTmbpDevcTto/view?usp=drive_link)
+   
+   - **Pindahkan hasil unduhan ke dalam folder `dashboard/`**
+   - **Ekstrak file `main_data.csv` ke dalam folder `dashboard/`**
 
 ## Menjalankan Dashboard
-Sebelum mengakses Streamlit, pastikan data telah diekstrak atau di-unzip dengan benar. Jika data tidak tersedia, silakan unduh dari tautan berikut:
-[Download Data](https://drive.google.com/file/d/1hXpa3YTI1V1kHsHkA0NTUTmbpDevcTto/view?usp=drive_link)
+Setelah data tersedia, ikuti langkah-langkah berikut untuk menjalankan dashboard:
 
-Setelah mengunduh, pindahkan hasil unduhan ke dalam folder **dashboard**, lalu ekstrak file tersebut.
-
-### Langkah-langkah menjalankan dashboard:
 1. Masuk ke folder **dashboard**:
    ```bash
    cd dashboard
