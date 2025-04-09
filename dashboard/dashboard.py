@@ -52,7 +52,7 @@ st.title("Dashboard Analyst E-Commerce Public Dataset")
 
 @st.cache_data
 def load_data():
-    url = "https://drive.google.com/drive/folders/13ngsiUjzfsGn_Icg1H5TeVxgKsm5lm7O"
+    url = "https://drive.google.com/uc?id=1fALdyA2kpLXyVmR3XYZnmnwAiYHQo3tJ"
     output = "main_data.csv"
 
     if not os.path.exists(output):
