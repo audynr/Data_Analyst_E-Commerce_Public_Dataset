@@ -53,12 +53,22 @@ st.title("Dashboard Analyst E-Commerce Public Dataset")
 
 @st.cache_data
 def load_data():
-    url = "https://drive.google.com/file/d/1ja_1jp_Qy4ilLJ_YVdT1O1ZPp5al7PJg/view?usp=sharing"
+    url = "https://drive.google.com/uc?id=FILE_ID&export=download"
     output = "main_data.csv"
-    
-    if not os.path.exists(output):  # Biar nggak download ulang
+
+    if not os.path.exists(output):
         gdown.download(url, output, quiet=False)
-    
+
+    # Cek apakah file benar-benar ada dan tidak kosong
+    if not os.path.exists(output) or os.path.getsize(output) == 0:
+        st.error("File tidak ditemukan atau kosong setelah download.")
+        return pd.DataFrame()
+
+    # Debug isi file
+    with open(output, "r", encoding="utf-8", errors="ignore") as f:
+        preview = f.read(500)
+        st.text("PREVIEW:\n" + preview)
+
     return pd.read_csv(output)
 
 data = load_data()
