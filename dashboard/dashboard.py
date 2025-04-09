@@ -6,9 +6,9 @@ import folium
 import streamlit.components.v1 as components
 import matplotlib.patches as mpatches
 import plotly.express as px
-import zipfile
-
-
+import os
+os.system("pip install gdown")
+import gdown
 
 
 # Suntikkan CSS kustom untuk tombol agar tampak seperti teks biasa
@@ -53,16 +53,20 @@ st.title("Dashboard Analyst E-Commerce Public Dataset")
 
 @st.cache_data
 def load_data():
-    with zipfile.ZipFile("main_data.zip", "r") as zip_ref:
-        zip_ref.extractall()  # Akan mengekstrak main_data.csv ke folder saat ini
-    return pd.read_csv("main_data.csv")  # pastikan nama file dalam ZIP adalah ini
+    url = "https://drive.google.com/file/d/1ja_1jp_Qy4ilLJ_YVdT1O1ZPp5al7PJg/view?usp=sharing"
+    output = "main_data.csv"
+    
+    if not os.path.exists(output):  # Biar nggak download ulang
+        gdown.download(url, output, quiet=False)
+    
+    return pd.read_csv(output)
 
 data = load_data()
 
 # --- Inisialisasi Session State ---
 if "main_page" not in st.session_state:
     st.session_state["main_page"] = "About Data"
-    
+
 
 # --- Fungsi untuk Mengubah Halaman Utama ---
 def set_main_page(page):
