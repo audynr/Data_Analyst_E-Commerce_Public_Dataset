@@ -3,6 +3,9 @@
 ## Gambaran Umum
 E-Commerce Public Dataset adalah kumpulan data transaksi e-commerce di Brasil yang mencakup sekitar 100.000 pesanan dari tahun 2016 hingga 2018. Dataset ini menyediakan informasi yang sangat kaya mengenai berbagai aspek pesanan, seperti status pesanan, harga, metode pembayaran, performa pengiriman, lokasi pelanggan, atribut produk, serta ulasan pelanggan. Data telah dianonimkan, dan referensi perusahaan atau mitra dalam ulasan telah diganti dengan nama-nama dari serial *Game of Thrones*. Dengan adanya data geolocation berdasarkan kode pos, analisis mengenai hubungan antara lokasi geografis dengan pola pembelian dan pengiriman dapat dilakukan dengan lebih mendalam. Dataset ini juga dapat digabungkan dengan *Marketing Funnel Dataset* untuk mendapatkan perspektif pemasaran yang lebih komprehensif.
 
+Jika ingin melihat **dashboard interaktif** yang telah dibuat menggunakan Streamlit terkait analisis ini, silakan kunjungi:  
+👉 [https://data-analyst-ecommerce-public-dataset-audynr.streamlit.app/](https://data-analyst-ecommerce-public-dataset-audynr.streamlit.app/)
+
 ## Struktur Proyek
 - **dashboard/**  
   - `dashboard.py` — File utama aplikasi Streamlit untuk dashboard.  
@@ -28,7 +31,7 @@ E-Commerce Public Dataset adalah kumpulan data transaksi e-commerce di Brasil ya
    Karena ukuran dataset terlalu besar untuk disertakan dalam repositori, file `main_data.csv` perlu diunduh secara manual.
    
    - **Unduh data dari tautan berikut:**  
-     [Download Data](https://drive.google.com/file/d/1hXpa3YTI1V1kHsHkA0NTUTmbpDevcTto/view?usp=drive_link)
+     [Download Data](https://drive.google.com/file/d/1ja_1jp_Qy4ilLJ_YVdT1O1ZPp5al7PJg/view?usp=drive_link)
    
    - **Pindahkan hasil unduhan ke dalam folder `dashboard/`**
    - **Ekstrak file `main_data.csv` ke dalam folder `dashboard/`**
@@ -55,4 +58,3 @@ Dashboard ini memberikan insight mendalam dari E-Commerce Public Dataset by Olis
 - **Tren Produk dan Pembayaran:** Mengeksplorasi kategori produk yang diminati serta jenis pembayaran yang paling digemari oleh pelanggan.
 
 Selamat mencoba dan semoga dashboard ini dapat membantu dalam memahami dinamika e-commerce di Brasil!
-
