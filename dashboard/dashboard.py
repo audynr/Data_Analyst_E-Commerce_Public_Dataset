@@ -7,7 +7,6 @@ import streamlit.components.v1 as components
 import matplotlib.patches as mpatches
 import plotly.express as px
 import os
-os.system("pip install gdown")
 import gdown
 
 
@@ -53,18 +52,13 @@ st.title("Dashboard Analyst E-Commerce Public Dataset")
 
 @st.cache_data
 def load_data():
-    url = "https://drive.google.com/uc?id=FILE_ID&export=download"
+    url = "https://drive.google.com/drive/folders/13ngsiUjzfsGn_Icg1H5TeVxgKsm5lm7O"
     output = "main_data.csv"
 
     if not os.path.exists(output):
         gdown.download(url, output, quiet=False)
 
-    # Cek apakah file benar-benar ada dan tidak kosong
-    if not os.path.exists(output) or os.path.getsize(output) == 0:
-        st.error("File tidak ditemukan atau kosong setelah download.")
-        return pd.DataFrame()
-
-    # Debug isi file
+    # Debug preview
     with open(output, "r", encoding="utf-8", errors="ignore") as f:
         preview = f.read(500)
         st.text("PREVIEW:\n" + preview)
@@ -72,6 +66,7 @@ def load_data():
     return pd.read_csv(output)
 
 data = load_data()
+
 
 # --- Inisialisasi Session State ---
 if "main_page" not in st.session_state:
