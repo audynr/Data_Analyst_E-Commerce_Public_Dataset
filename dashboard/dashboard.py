@@ -6,6 +6,10 @@ import folium
 import streamlit.components.v1 as components
 import matplotlib.patches as mpatches
 import plotly.express as px
+import zipfile
+
+
+
 
 # Suntikkan CSS kustom untuk tombol agar tampak seperti teks biasa
 st.markdown(
@@ -49,14 +53,16 @@ st.title("Dashboard Analyst E-Commerce Public Dataset")
 
 @st.cache_data
 def load_data():
-    data = pd.read_csv("main_data.csv")  # Pastikan file main_data.csv sudah tersedia
-    return data
+    with zipfile.ZipFile("main_data.zip", "r") as zip_ref:
+        zip_ref.extractall()  # Akan mengekstrak main_data.csv ke folder saat ini
+    return pd.read_csv("main_data.csv")  # pastikan nama file dalam ZIP adalah ini
 
 data = load_data()
 
 # --- Inisialisasi Session State ---
 if "main_page" not in st.session_state:
     st.session_state["main_page"] = "About Data"
+    
 
 # --- Fungsi untuk Mengubah Halaman Utama ---
 def set_main_page(page):
