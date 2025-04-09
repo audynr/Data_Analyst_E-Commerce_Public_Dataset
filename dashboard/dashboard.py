@@ -52,16 +52,11 @@ st.title("Dashboard Analyst E-Commerce Public Dataset")
 
 @st.cache_data
 def load_data():
-    url = "https://drive.google.com/uc?id=1fALdyA2kpLXyVmR3XYZnmnwAiYHQo3tJ"
+    url = "https://drive.google.com/uc?id=1ja_1jp_Qy4ilLJ_YVdT1O1ZPp5al7PJg"
     output = "main_data.csv"
 
     if not os.path.exists(output):
         gdown.download(url, output, quiet=False)
-
-    # Debug preview
-    with open(output, "r", encoding="utf-8", errors="ignore") as f:
-        preview = f.read(500)
-        st.text("PREVIEW:\n" + preview)
 
     return pd.read_csv(output)
 
