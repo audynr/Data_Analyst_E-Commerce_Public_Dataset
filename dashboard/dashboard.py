@@ -105,7 +105,7 @@ if st.session_state["main_page"] == "About Data":
         
         Berdasarkan proses **Assessing Data**, struktur dataset ini telah dirancang dengan cermat seperti yang ditunjukkan pada diagram berikut:
         """, unsafe_allow_html=True)
-        st.image("../img/relasi_data.png", caption="Struktur Dataset")
+        st.image("https://raw.githubusercontent.com/audynr/Data_Analyst_E-Commerce_Public_Dataset/main/img/relasi_data.png")
         st.markdown("""
         Dataset ini terdiri dari beberapa tabel yang terhubung melalui **relasi kunci utama dan kunci asing**, seperti *order_id*, *customer_id*, *product_id*, dan *seller_id*. Dengan menggabungkan seluruh dataset, kita mendapatkan gambaran yang lebih utuh mengenai keterkaitan antara pesanan, pelanggan, metode pembayaran, kategori produk, serta ulasan pelanggan. Pendekatan ini memungkinkan penemuan pola, tren, dan wawasan bisnis yang lebih mendalam.
         """, unsafe_allow_html=True)
